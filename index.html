@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FundPath - Portfolio AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Figtree', sans-serif; background: #F2F2EA; color: #1A1A14; min-height: 100vh; }
+
+    /* ── TOP BAR ── */
+    .topbar { background: #0B3D2E; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+    .logo { display: flex; align-items: center; gap: 11px; }
+    .logo-mark { width: 34px; height: 34px; border-radius: 9px; background: #2E9B6E; display: flex; align-items: center; justify-content: center; }
+    .logo-name { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; color: #FAFAF5; }
+    .logo-sub { font-size: 10px; font-weight: 500; background: rgba(110,203,160,0.25); color: #6DCBA0; padding: 2px 9px; border-radius: 20px; letter-spacing: 0.6px; text-transform: uppercase; border: 1px solid rgba(110,203,160,0.3); }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .usage-pill { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 5px 13px; }
+    .usage-label { font-size: 12px; color: rgba(255,255,255,0.6); }
+    .usage-count { font-size: 12px; font-weight: 500; color: #FAFAF5; }
+    .ubar-wrap { width: 54px; height: 3px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden; }
+    .ubar { height: 100%; border-radius: 2px; background: #6DCBA0; transition: width 0.4s, background 0.3s; }
+    .ubar.warn { background: #E8C060; }
+    .ubar.crit { background: #E07060; }
+    .upgrade-btn { padding: 7px 18px; background: #2E9B6E; color: #FAFAF5; border: none; border-radius: 20px; font-family: 'Figtree', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+    .upgrade-btn:hover { background: #1A6B4A; }
+
+    /* ── BANNERS ── */
+    .live-banner { background: #1A6B4A; padding: 9px 28px; font-size: 12px; color: rgba(194,237,217,0.95); display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #6DCBA0; animation: pdot 1.8s infinite; flex-shrink: 0; }
+    @keyframes pdot { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+    .disc-banner { background: #0B3D2E; padding: 8px 28px; font-size: 11.5px; color: rgba(194,237,217,0.7); display: flex; align-items: flex-start; gap: 7px; line-height: 1.5; border-bottom: 1px solid rgba(255,255,255,0.06); }
+
+    /* ── MAIN ── */
+    .main { max-width: 880px; margin: 0 auto; padding: 40px 22px 80px; }
+
+    /* ── HERO ── */
+    .hero { text-align: center; margin-bottom: 40px; }
+    .hero-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: #2E9B6E; margin-bottom: 14px; }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: 46px; font-weight: 500; color: #1A1A14; line-height: 1.06; letter-spacing: -0.5px; margin-bottom: 14px; }
+    .hero h1 em { font-style: italic; color: #1A6B4A; }
+    .hero p { font-size: 15px; color: #3D3D30; max-width: 520px; margin: 0 auto; line-height: 1.75; font-weight: 300; }
+    .source-strip { display: flex; align-items: center; gap: 6px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+    .src-label { font-size: 11px; color: #7A7A6A; font-weight: 500; }
+    .src-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: #F2F2EA; border: 1px solid #D4D4C4; color: #3D3D30; }
+
+    /* ── NUDGE ── */
+    .nudge { background: #C2EDD9; border: 1px solid #6DCBA0; border-radius: 10px; padding: 11px 18px; display: none; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+    .nudge.show { display: flex; }
+    .nudge p { font-size: 13px; color: #0B3D2E; font-weight: 500; }
+    .nudge button { font-size: 12px; font-weight: 600; color: #0B3D2E; background: none; border: 1px solid #2E9B6E; border-radius: 20px; padding: 5px 14px; cursor: pointer; font-family: 'Figtree', sans-serif; }
+
+    /* ── CARD ── */
+    .card { background: #FAFAF5; border: 1px solid #E8E8DC; border-radius: 18px; padding: 28px; margin-bottom: 18px; }
+    .slabel { font-size: 10px; font-weight: 600; letter-spacing: 1.1px; text-transform: uppercase; color: #7A7A6A; margin-bottom: 11px; }
+
+    /* ── INPUTS ── */
+    .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-group label { font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: #7A7A6A; }
+    .ifield { padding: 9px 13px; border: 1px solid #D4D4C4; border-radius: 9px; font-family: 'Figtree', sans-serif; font-size: 13.5px; color: #1A1A14; background: #F2F2EA; outline: none; transition: border-color 0.15s, background 0.15s; width: 100%; }
+    .ifield:focus { border-color: #2E9B6E; background: #FAFAF5; }
+    .ifield::placeholder { color: #ADADAA; }
+    select.ifield { cursor: pointer; }
+
+    /* ── EXAMPLES ── */
+    .examples { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+    .ex { padding: 6px 14px; border-radius: 20px; font-size: 12px; border: 1px solid #D4D4C4; cursor: pointer; color: #3D3D30; background: #F2F2EA; transition: all 0.12s; font-family: 'Figtree', sans-serif; }
+    .ex:hover { border-color: #2E9B6E; color: #0B3D2E; background: #C2EDD9; }
+
+    /* ── TEXTAREA ── */
+    .prompt-area { width: 100%; min-height: 90px; padding: 13px 15px; border: 1px solid #D4D4C4; border-radius: 12px; font-family: 'Figtree', sans-serif; font-size: 14px; line-height: 1.7; color: #1A1A14; background: #F2F2EA; resize: vertical; outline: none; margin-bottom: 6px; transition: border-color 0.15s, background 0.15s; }
+    .prompt-area:focus { border-color: #2E9B6E; background: #FAFAF5; }
+    .prompt-area::placeholder { color: #ADADAA; font-weight: 300; }
+    .char-count { font-size: 11px; color: #ADADAA; text-align: right; margin-bottom: 16px; }
+
+    /* ── CHIPS ── */
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 22px; }
+    .chip { padding: 6px 14px; border-radius: 8px; font-size: 12.5px; border: 1px solid #D4D4C4; cursor: pointer; color: #3D3D30; background: #F2F2EA; transition: all 0.12s; user-select: none; font-family: 'Figtree', sans-serif; }
+    .chip:hover { border-color: #2E9B6E; color: #0B3D2E; }
+    .chip.on { background: #C2EDD9; border-color: #6DCBA0; color: #0B3D2E; font-weight: 600; }
+
+    /* ── MODE SELECTOR ── */
+    .mode-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .mode-card { border: 1.5px solid #E8E8DC; border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.15s; background: #FAFAF5; user-select: none; }
+    .mode-card:hover { border-color: #6DCBA0; }
+    .mode-card.active { border: 2px solid #0B3D2E; background: #F5FCF8; }
+    .mode-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+    .mode-title { font-size: 14px; font-weight: 600; color: #1A1A14; }
+    .mode-tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; display: inline-block; margin-top: 4px; }
+    .mode-tag.free { background: #E8E8DC; color: #7A7A6A; }
+    .mode-tag.pro { background: #C2EDD9; color: #0B3D2E; border: 1px solid #6DCBA0; }
+    .mode-check { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid #D4D4C4; flex-shrink: 0; position: relative; transition: all 0.15s; }
+    .mode-desc { font-size: 12.5px; color: #7A7A6A; line-height: 1.55; margin-bottom: 8px; }
+    .mode-time { font-size: 12px; font-weight: 600; color: #2E9B6E; margin-bottom: 8px; }
+    .mode-features { display: flex; flex-direction: column; gap: 4px; }
+    .mf { font-size: 11.5px; color: #3D3D30; display: flex; gap: 6px; align-items: flex-start; }
+    .mf-dot { width: 4px; height: 4px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+    .mf-dot.green { background: #2E9B6E; }
+    .mf-dot.gray { background: #D4D4C4; }
+
+    /* ── EST ROW ── */
+    .est-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #F5FCF8; border: 1px solid #C2EDD9; border-radius: 10px; padding: 12px 16px; margin-bottom: 18px; flex-wrap: wrap; }
+    .est-left { display: flex; align-items: center; gap: 9px; }
+    .est-icon { width: 28px; height: 28px; border-radius: 50%; background: #C2EDD9; border: 1px solid #6DCBA0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .est-text { font-size: 13px; color: #3D3D30; line-height: 1.4; }
+    .est-text strong { font-weight: 600; color: #1A1A14; }
+    .est-time { font-size: 20px; font-weight: 500; color: #1A6B4A; font-family: 'Playfair Display', serif; white-space: nowrap; }
+    .notify-btn { display: flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 20px; font-family: 'Figtree', sans-serif; font-size: 12.5px; font-weight: 500; cursor: pointer; border: 1px solid #D4D4C4; background: #FAFAF5; color: #3D3D30; transition: all 0.15s; white-space: nowrap; }
+    .notify-btn:hover { border-color: #2E9B6E; color: #0B3D2E; background: #C2EDD9; }
+    .notify-btn.active { background: #C2EDD9; border-color: #6DCBA0; color: #0B3D2E; font-weight: 600; }
+    .notify-btn.active .nb-dot { background: #1A6B4A; }
+    .nb-dot { width: 7px; height: 7px; border-radius: 50%; background: #D4D4C4; transition: background 0.2s; }
+
+    .divider { height: 1px; background: #E8E8DC; margin: 4px 0 22px; }
+    .err { color: #8B2020; font-size: 13px; padding: 10px 14px; background: #FDECEA; border-radius: 8px; margin-bottom: 12px; display: none; border: 1px solid #F0BFBF; }
+
+    /* ── SUBMIT ── */
+    .submit-area { display: flex; flex-direction: column; gap: 10px; }
+    .run-btn { width: 100%; padding: 16px; background: #0B3D2E; color: #FAFAF5; border: none; border-radius: 12px; font-family: 'Figtree', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s, transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 9px; letter-spacing: 0.2px; }
+    .run-btn:hover { background: #1A6B4A; }
+    .run-btn:active { transform: scale(0.99); }
+    .run-btn:disabled { background: #E8E8DC; color: #ADADAA; cursor: not-allowed; transform: none; }
+    .submit-note { text-align: center; font-size: 12px; color: #7A7A6A; }
+
+    /* ── PROGRESS ── */
+    .progress-wrap { display: none; margin-bottom: 18px; }
+    .progress-wrap.show { display: block; }
+    .progress-card { background: #FAFAF5; border: 1px solid #E8E8DC; border-radius: 14px; padding: 20px 24px; }
+    .prog-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .prog-label { font-size: 13px; font-weight: 600; color: #1A1A14; }
+    .prog-time { font-size: 13px; color: #2E9B6E; font-weight: 600; }
+    .prog-bar-wrap { height: 5px; background: #E8E8DC; border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
+    .prog-bar { height: 100%; background: #2E9B6E; border-radius: 3px; width: 0%; transition: width 0.8s ease; }
+    .prog-status { font-size: 12px; color: #7A7A6A; display: flex; align-items: center; gap: 6px; }
+    .prog-dot { width: 6px; height: 6px; border-radius: 50%; background: #6DCBA0; animation: blink 1.4s infinite; }
+    @keyframes blink { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+    /* ── TOAST ── */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: #0B3D2E; color: #FAFAF5; border-radius: 12px; padding: 14px 18px; font-size: 13px; display: flex; align-items: center; gap: 10px; z-index: 999; transform: translateY(80px); opacity: 0; transition: all 0.3s ease; max-width: 300px; pointer-events: none; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast-icon { width: 24px; height: 24px; border-radius: 50%; background: #2E9B6E; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .toast p { font-size: 12.5px; line-height: 1.4; }
+    .toast strong { font-weight: 600; display: block; margin-bottom: 1px; }
+
+    /* ── RESULT ── */
+    .result-card { background: #FAFAF5; border: 1px solid #E8E8DC; border-radius: 18px; overflow: hidden; margin-bottom: 18px; display: none; }
+    .result-card.visible { display: block; }
+    .result-header { padding: 16px 26px; border-bottom: 1px solid #E8E8DC; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; background: #EBF7F2; }
+    .result-title { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 500; color: #0B3D2E; }
+    .result-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+    .edu-tag { font-size: 11px; font-weight: 600; background: #FAFAF5; color: #7A7A6A; padding: 3px 10px; border-radius: 6px; border: 1px solid #E8E8DC; }
+    .live-tag { font-size: 11px; font-weight: 600; background: #C2EDD9; color: #0B3D2E; padding: 3px 10px; border-radius: 6px; border: 1px solid #6DCBA0; display: flex; align-items: center; gap: 5px; }
+    .result-body { padding: 26px; font-size: 13.5px; line-height: 1.85; color: #3D3D30; }
+    .result-body h3 { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 500; color: #0B3D2E; margin: 24px 0 9px; padding-bottom: 6px; border-bottom: 1px solid #E8E8DC; }
+    .result-body h3:first-child { margin-top: 0; }
+    .result-body p { margin-bottom: 9px; }
+    .result-body ul { margin: 0 0 10px 20px; }
+    .result-body li { margin-bottom: 5px; }
+    .result-body strong { font-weight: 600; color: #1A1A14; }
+    .dots { display: flex; gap: 6px; padding: 30px 26px; align-items: center; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #C2EDD9; animation: bop 1.2s infinite; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bop { 0%, 80%, 100% { transform: translateY(0); opacity: 0.4; } 40% { transform: translateY(-5px); opacity: 1; } }
+
+    /* ── TEASE ── */
+    .tease-section { display: none; border-top: 1px solid #E8E8DC; }
+    .tease-section.visible { display: block; }
+    .tease-grid { display: grid; grid-template-columns: 1fr 1fr; }
+    .tease-panel { padding: 20px 22px; border-right: 1px solid #E8E8DC; position: relative; overflow: hidden; background: #FAFAF5; }
+    .tease-panel:nth-child(2) { border-right: none; }
+    .tease-panel:nth-child(1), .tease-panel:nth-child(2) { border-bottom: 1px solid #E8E8DC; }
+    .tease-panel:nth-child(3) { border-right: 1px solid #E8E8DC; }
+    .tease-blur { filter: blur(3px); pointer-events: none; user-select: none; opacity: 0.45; }
+    .tease-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: rgba(245,252,248,0.82); cursor: pointer; }
+    .tease-lock { width: 34px; height: 34px; border-radius: 50%; background: #C2EDD9; border: 1px solid #6DCBA0; display: flex; align-items: center; justify-content: center; }
+    .tease-overlay-text { font-size: 12px; font-weight: 600; color: #0B3D2E; text-align: center; line-height: 1.4; }
+    .tease-overlay-sub { font-size: 11px; color: #2E9B6E; }
+    .tease-label { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: #7A7A6A; margin-bottom: 8px; }
+    .tease-content { font-size: 12.5px; color: #3D3D30; line-height: 1.65; }
+    .tease-item { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 5px; }
+    .tease-dot { width: 5px; height: 5px; border-radius: 50%; background: #6DCBA0; margin-top: 6px; flex-shrink: 0; }
+
+    /* ── UPGRADE WALL ── */
+    .upgrade-wall { display: none; min-height: 440px; background: rgba(11,61,46,0.5); border-radius: 18px; align-items: center; justify-content: center; margin-bottom: 18px; }
+    .upgrade-wall.visible { display: flex; }
+    .upgrade-modal { background: #FAFAF5; border-radius: 18px; border: 1px solid #E8E8DC; padding: 36px 30px; max-width: 480px; width: 100%; text-align: center; }
+    .upgrade-modal-icon { width: 52px; height: 52px; border-radius: 50%; background: #C2EDD9; border: 1px solid #6DCBA0; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+    .upgrade-modal h2 { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 500; color: #1A1A14; margin-bottom: 9px; }
+    .upgrade-modal-sub { font-size: 13.5px; color: #3D3D30; line-height: 1.65; margin-bottom: 20px; font-weight: 300; }
+    .deep-upsell { background: #F5FCF8; border: 1px solid #C2EDD9; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; text-align: left; }
+    .deep-upsell-title { font-size: 13px; font-weight: 600; color: #0B3D2E; margin-bottom: 7px; }
+    .deep-upsell-item { font-size: 12px; color: #3D3D30; display: flex; gap: 6px; margin-bottom: 4px; }
+    .di-dot { width: 4px; height: 4px; border-radius: 50%; background: #2E9B6E; margin-top: 5px; flex-shrink: 0; }
+    .billing-toggle { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 18px; }
+    .billing-label { font-size: 13px; color: #7A7A6A; }
+    .billing-label.active { color: #1A1A14; font-weight: 600; }
+    .billing-switch { width: 44px; height: 24px; background: #0B3D2E; border-radius: 12px; position: relative; cursor: pointer; border: none; transition: background 0.2s; }
+    .billing-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #FAFAF5; transition: transform 0.2s; }
+    .billing-switch.monthly::after { transform: translateX(20px); }
+    .save-badge { font-size: 11px; font-weight: 600; background: #C2EDD9; color: #0B3D2E; padding: 2px 9px; border-radius: 20px; border: 1px solid #6DCBA0; }
+    .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .plan-card { border: 1px solid #E8E8DC; border-radius: 14px; padding: 16px 14px; text-align: left; background: #FAFAF5; }
+    .plan-card.featured { border: 2px solid #0B3D2E; }
+    .popular-badge { display: inline-block; font-size: 10px; font-weight: 600; background: #C2EDD9; color: #0B3D2E; padding: 2px 9px; border-radius: 10px; margin-bottom: 8px; }
+    .plan-name { font-size: 13px; font-weight: 600; color: #1A1A14; margin-bottom: 4px; }
+    .plan-price { font-size: 26px; font-weight: 500; color: #1A1A14; margin-bottom: 9px; font-family: 'Playfair Display', serif; }
+    .plan-price span { font-size: 13px; font-weight: 400; color: #7A7A6A; font-family: 'Figtree', sans-serif; }
+    .plan-feature { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; color: #3D3D30; line-height: 1.6; margin-bottom: 3px; }
+    .plan-feature-dot { width: 4px; height: 4px; border-radius: 50%; background: #2E9B6E; margin-top: 7px; flex-shrink: 0; }
+    .cta-btn { width: 100%; padding: 13px; background: #0B3D2E; color: #FAFAF5; border: none; border-radius: 10px; font-family: 'Figtree', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 11px; transition: background 0.15s; }
+    .cta-btn:hover { background: #1A6B4A; }
+    .cta-skip { font-size: 12px; color: #ADADAA; cursor: pointer; font-family: 'Figtree', sans-serif; }
+    .cta-skip:hover { color: #7A7A6A; }
+
+    /* ── FOOTER ── */
+    .disc-footer { background: #F2F2EA; border: 1px solid #E8E8DC; border-radius: 14px; padding: 18px 22px; font-size: 12px; color: #7A7A6A; line-height: 1.7; }
+    .disc-footer strong { color: #3D3D30; font-weight: 600; display: block; margin-bottom: 5px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .topbar { padding: 12px 16px; }
+      .main { padding: 26px 14px 60px; }
+      .hero h1 { font-size: 34px; }
+      .tease-grid { grid-template-columns: 1fr; }
+      .plan-grid { grid-template-columns: 1fr; }
+      .mode-selector { grid-template-columns: 1fr; }
+      .tease-panel { border-right: none !important; border-bottom: 1px solid #E8E8DC; }
+      .input-grid { grid-template-columns: 1fr; }
+      .est-row { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+          <path d="M4 14 C4 14 7 6 10 10 C13 14 16 6 16 6" stroke="#FAFAF5" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <circle cx="16" cy="6" r="2" fill="#FAFAF5"/>
+        </svg>
+      </div>
+      <span class="logo-name">FundPath</span>
+      <span class="logo-sub">Portfolio AI</span>
+    </div>
+    <div class="topbar-right">
+      <div class="usage-pill">
+        <span class="usage-label">Free prompts</span>
+        <div class="ubar-wrap"><div class="ubar" id="ubar" style="width:100%"></div></div>
+        <span class="usage-count" id="ucount">5 / 5</span>
+      </div>
+      <button class="upgrade-btn" onclick="showWall(true)">Upgrade</button>
+    </div>
+  </div>
+
+  <div class="live-banner">
+    <div class="live-dot"></div>
+    <span><strong>Live market context on.</strong> Every blueprint pulls today's conditions from Reuters, CNBC, MarketWatch and Yahoo Finance so your plan reflects what's actually happening right now.</span>
+  </div>
+
+  <div class="disc-banner">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="rgba(194,237,217,0.6)" stroke-width="1.2"/><line x1="8" y1="5" x2="8" y2="9" stroke="rgba(194,237,217,0.6)" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.85" fill="rgba(194,237,217,0.6)"/></svg>
+    <span><strong>For education only.</strong> Blueprints are AI-generated for informational purposes only and are not investment advice. FundPath is not affiliated with any financial institution or news source. Always talk to a licensed financial advisor before investing.</span>
+  </div>
+
+  <div class="main">
+    <div class="hero">
+      <div class="hero-eyebrow">AI-powered portfolio planning</div>
+      <h1>Find your<br><em>fund path</em></h1>
+      <p>Tell FundPath about yourself in plain English and get a personalised portfolio blueprint built around your goals, timeline and risk tolerance in seconds.</p>
+      <div class="source-strip">
+        <span class="src-label">Market data sourced from</span>
+        <span class="src-badge">Reuters</span>
+        <span class="src-badge">CNBC</span>
+        <span class="src-badge">MarketWatch</span>
+        <span class="src-badge">Yahoo Finance</span>
+        <span class="src-badge">Federal Reserve</span>
+      </div>
+    </div>
+
+    <div class="nudge" id="nudge">
+      <p id="nudge-text">You have 2 free prompts left this month.</p>
+      <button onclick="showWall(true)">Upgrade for unlimited access</button>
+    </div>
+
+    <div class="card">
+      <div class="slabel">Start with an example</div>
+      <div class="examples">
+        <div class="ex" onclick="fillEx('quick')">23 years old, aggressive growth</div>
+        <div class="ex" onclick="fillEx('moderate')">45 years old, growth and income</div>
+        <div class="ex" onclick="fillEx('conservative')">Retiring in 10 years, low risk</div>
+        <div class="ex" onclick="fillEx('tech')">28 years old, too much tech exposure</div>
+        <div class="ex" onclick="fillEx('beginner')">First time investor, $500 a month</div>
+        <div class="ex" onclick="fillEx('esg')">ESG focused, 35 years old</div>
+      </div>
+
+      <div class="slabel">Tell us about yourself</div>
+      <div class="input-grid">
+        <div class="input-group">
+          <label>Your age</label>
+          <input class="ifield" id="f-age" type="number" placeholder="e.g. 28" min="18" max="90" oninput="updateEst()">
+        </div>
+        <div class="input-group">
+          <label>How comfortable are you with risk?</label>
+          <select class="ifield" id="f-risk" onchange="updateEst()">
+            <option value="">Choose one...</option>
+            <option value="very low (capital preservation above all)">Very low, I want to protect what I have</option>
+            <option value="low (modest growth, minimal losses)">Low, some growth but not much risk</option>
+            <option value="moderate (balanced growth and stability)">Moderate, a healthy balance</option>
+            <option value="high (growth focused, comfortable with swings)">High, I can handle ups and downs</option>
+            <option value="very high (aggressive growth, maximum risk tolerance)">Very high, I want maximum growth</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>How long are you investing for?</label>
+          <select class="ifield" id="f-timeline" onchange="updateEst()">
+            <option value="">Choose one...</option>
+            <option value="short term (1 to 3 years)">1 to 3 years</option>
+            <option value="medium term (3 to 7 years)">3 to 7 years</option>
+            <option value="long term (7 to 15 years)">7 to 15 years</option>
+            <option value="very long term (15 or more years)">15 or more years</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>What is your main goal?</label>
+          <select class="ifield" id="f-goal" onchange="updateEst()">
+            <option value="">Choose one...</option>
+            <option value="building long term wealth">Building long term wealth</option>
+            <option value="planning for retirement">Planning for retirement</option>
+            <option value="generating regular income">Generating regular income</option>
+            <option value="protecting my existing wealth">Protecting my existing wealth</option>
+            <option value="saving for a big purchase">Saving for a big purchase</option>
+            <option value="diversifying what I already own">Diversifying what I already own</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="slabel">Anything else we should know? (optional)</div>
+      <textarea class="prompt-area" id="prompt" maxlength="600" oninput="onInput()" placeholder="Tell us about any existing investments, monthly budget, ethical preferences, income needs, or anything else that matters to you..."></textarea>
+      <div class="char-count"><span id="char-count">0</span> / 600</div>
+
+      <div class="slabel">What assets should we include?</div>
+      <div class="chips">
+        <span class="chip on" onclick="toggleChip(this)">Stocks</span>
+        <span class="chip on" onclick="toggleChip(this)">ETFs</span>
+        <span class="chip on" onclick="toggleChip(this)">Mutual funds</span>
+        <span class="chip" onclick="toggleChip(this)">Bonds</span>
+        <span class="chip" onclick="toggleChip(this)">REITs</span>
+        <span class="chip" onclick="toggleChip(this)">Dividend stocks</span>
+        <span class="chip" onclick="toggleChip(this)">Index funds</span>
+        <span class="chip" onclick="toggleChip(this)">International</span>
+        <span class="chip" onclick="toggleChip(this)">Crypto (informational)</span>
+      </div>
+
+      <div class="slabel">Choose your analysis depth</div>
+      <div class="mode-selector">
+        <div class="mode-card active" id="mode-std" onclick="setMode('standard')">
+          <div class="mode-top">
+            <div>
+              <div class="mode-title">Standard Blueprint</div>
+              <div class="mode-tag free">Free</div>
+            </div>
+            <div class="mode-check" id="check-std" style="background:#0B3D2E;border-color:#0B3D2E;">
+              <svg width="9" height="6" viewBox="0 0 10 7" fill="none" style="position:absolute;top:5px;left:4px;"><path d="M1 3l3 3 5-5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+          <div class="mode-desc">A clear, well-structured portfolio plan with allocation breakdown, rationale and key risks.</div>
+          <div class="mode-time">About 12 to 16 seconds</div>
+          <div class="mode-features">
+            <div class="mf"><div class="mf-dot green"></div><span>Portfolio allocation</span></div>
+            <div class="mf"><div class="mf-dot green"></div><span>Position rationale</span></div>
+            <div class="mf"><div class="mf-dot green"></div><span>Risk overview</span></div>
+            <div class="mf"><div class="mf-dot gray"></div><span style="color:#ADADAA;">Scenario analysis</span></div>
+            <div class="mf"><div class="mf-dot gray"></div><span style="color:#ADADAA;">Tax guidance</span></div>
+          </div>
+        </div>
+        <div class="mode-card" id="mode-deep" onclick="setMode('deep')">
+          <div class="mode-top">
+            <div>
+              <div class="mode-title">Deep Analysis</div>
+              <div class="mode-tag pro">Pro feature</div>
+            </div>
+            <div class="mode-check" id="check-deep"></div>
+          </div>
+          <div class="mode-desc">A full institutional-grade breakdown covering every dimension of your portfolio plan.</div>
+          <div class="mode-time">About 30 to 40 seconds</div>
+          <div class="mode-features">
+            <div class="mf"><div class="mf-dot green"></div><span>Everything in Standard</span></div>
+            <div class="mf"><div class="mf-dot green"></div><span>Live market context</span></div>
+            <div class="mf"><div class="mf-dot green"></div><span>Scenario analysis (recession, inflation, rate cuts)</span></div>
+            <div class="mf"><div class="mf-dot green"></div><span>Factor exposure breakdown</span></div>
+            <div class="mf"><div class="mf-dot green"></div><span>Tax strategy guidance</span></div>
+            <div class="mf"><div class="mf-dot green"></div><span>Rebalancing framework</span></div>
+            <div class="mf"><div class="mf-dot green"></div><span>Ongoing monitoring tips</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="est-row" id="est-row" style="display:none;">
+        <div class="est-left">
+          <div class="est-icon">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#1A6B4A" stroke-width="1.3"/><path d="M8 5v3l2 2" stroke="#1A6B4A" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </div>
+          <div class="est-text">
+            <strong>Estimated time</strong><br>
+            <span id="est-label">Based on your inputs</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="est-time" id="est-time"></div>
+          <button class="notify-btn" id="notify-btn" onclick="toggleNotify()">
+            <div class="nb-dot" id="nb-dot"></div>
+            <span id="notify-label">Notify me when ready</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="err" id="err">Please fill in at least your age and risk tolerance before we can build your plan.</div>
+      <div class="submit-area">
+        <button class="run-btn" id="run-btn" onclick="runPortfolio()">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+            <path d="M4 14 C4 14 7 6 10 10 C13 14 16 6 16 6" stroke="#FAFAF5" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+            <circle cx="16" cy="6" r="2" fill="#FAFAF5"/>
+          </svg>
+          <span id="btn-label">Build my fund path</span>
+        </button>
+        <div class="submit-note" id="submit-note">Your personalised blueprint will be ready in seconds. No account needed.</div>
+      </div>
+    </div>
+
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="progress-card">
+        <div class="prog-top">
+          <span class="prog-label">Building your fund path...</span>
+          <span class="prog-time" id="prog-time"></span>
+        </div>
+        <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar"></div></div>
+        <div class="prog-status"><div class="prog-dot"></div><span id="prog-status">Looking at your situation</span></div>
+      </div>
+    </div>
+
+    <div class="result-card" id="result-card">
+      <div class="result-header">
+        <span class="result-title">Your FundPath blueprint</span>
+        <div class="result-badges">
+          <span class="edu-tag">For education only</span>
+          <span class="live-tag">
+            <div style="width:6px;height:6px;border-radius:50%;background:#2E9B6E;animation:pdot 1.8s infinite;"></div>
+            Live context
+          </span>
+        </div>
+      </div>
+      <div id="result-body" class="result-body">
+        <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      </div>
+      <div class="tease-section" id="tease-section">
+        <div class="tease-grid">
+          <div class="tease-panel"><div class="tease-blur"><div class="tease-label">Refine this path</div><div class="tease-content"><div class="tease-item"><div class="tease-dot"></div><span>Make it more conservative</span></div><div class="tease-item"><div class="tease-dot"></div><span>Shift toward more income</span></div><div class="tease-item"><div class="tease-dot"></div><span>Adjust for current market conditions</span></div></div></div><div class="tease-overlay" onclick="showWall(true)"><div class="tease-lock"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="3" y="7.5" width="10" height="7" rx="1.5" stroke="#0B3D2E" stroke-width="1.3"/><path d="M5.5 7.5V5.5a2.5 2.5 0 015 0v2" stroke="#0B3D2E" stroke-width="1.3" stroke-linecap="round"/></svg></div><div class="tease-overlay-text">Pro: Refine and follow up<br><span class="tease-overlay-sub">Upgrade to unlock</span></div></div></div>
+          <div class="tease-panel"><div class="tease-blur"><div class="tease-label">Deep analysis</div><div class="tease-content"><div class="tease-item"><div class="tease-dot"></div><span>Scenario analysis (recession, inflation, rate cuts)</span></div><div class="tease-item"><div class="tease-dot"></div><span>Factor exposure and tax guidance</span></div><div class="tease-item"><div class="tease-dot"></div><span>Full rebalancing framework</span></div></div></div><div class="tease-overlay" onclick="showWall(true)"><div class="tease-lock"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="3" y="7.5" width="10" height="7" rx="1.5" stroke="#0B3D2E" stroke-width="1.3"/><path d="M5.5 7.5V5.5a2.5 2.5 0 015 0v2" stroke="#0B3D2E" stroke-width="1.3" stroke-linecap="round"/></svg></div><div class="tease-overlay-text">Pro: Deep analysis mode<br><span class="tease-overlay-sub">Upgrade to unlock</span></div></div></div>
+          <div class="tease-panel"><div class="tease-blur"><div class="tease-label">Save this blueprint</div><div class="tease-content"><div class="tease-item"><div class="tease-dot"></div><span>Name and save this fund path</span></div><div class="tease-item"><div class="tease-dot"></div><span>Access it from any device</span></div><div class="tease-item"><div class="tease-dot"></div><span>Compare multiple blueprints</span></div></div></div><div class="tease-overlay" onclick="showWall(true)"><div class="tease-lock"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="3" y="7.5" width="10" height="7" rx="1.5" stroke="#0B3D2E" stroke-width="1.3"/><path d="M5.5 7.5V5.5a2.5 2.5 0 015 0v2" stroke="#0B3D2E" stroke-width="1.3" stroke-linecap="round"/></svg></div><div class="tease-overlay-text">Pro: Save fund paths<br><span class="tease-overlay-sub">Upgrade to unlock</span></div></div></div>
+          <div class="tease-panel"><div class="tease-blur"><div class="tease-label">Export to PDF</div><div class="tease-content"><div class="tease-item"><div class="tease-dot"></div><span>Download a formatted PDF</span></div><div class="tease-item"><div class="tease-dot"></div><span>Share it with your advisor</span></div><div class="tease-item"><div class="tease-dot"></div><span>Print ready layout</span></div></div></div><div class="tease-overlay" onclick="showWall(true)"><div class="tease-lock"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="3" y="7.5" width="10" height="7" rx="1.5" stroke="#0B3D2E" stroke-width="1.3"/><path d="M5.5 7.5V5.5a2.5 2.5 0 015 0v2" stroke="#0B3D2E" stroke-width="1.3" stroke-linecap="round"/></svg></div><div class="tease-overlay-text">Investor+: PDF export<br><span class="tease-overlay-sub">Upgrade to unlock</span></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="upgrade-wall" id="upgrade-wall">
+      <div class="upgrade-modal">
+        <div class="upgrade-modal-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="4" y="10" width="14" height="10" rx="2.5" stroke="#0B3D2E" stroke-width="1.4"/><path d="M7.5 10V7a3.5 3.5 0 017 0v3" stroke="#0B3D2E" stroke-width="1.4" stroke-linecap="round"/><circle cx="11" cy="15" r="1.4" fill="#0B3D2E"/></svg></div>
+        <h2 id="wall-title">You have used all 5 free prompts</h2>
+        <p class="upgrade-modal-sub">Upgrade to keep building your fund path. Pro gives you 100 prompts a month, plus deep analysis, saved blueprints and a lot more.</p>
+        <div class="deep-upsell">
+          <div class="deep-upsell-title">What you unlock with Deep Analysis</div>
+          <div class="deep-upsell-item"><div class="di-dot"></div><span>How your portfolio holds up in a recession, inflation spike or rate cut</span></div>
+          <div class="deep-upsell-item"><div class="di-dot"></div><span>Factor exposure breakdown covering growth vs value, sectors and geography</span></div>
+          <div class="deep-upsell-item"><div class="di-dot"></div><span>Tax strategy guidance and asset location tips</span></div>
+          <div class="deep-upsell-item"><div class="di-dot"></div><span>A rebalancing framework you can actually follow</span></div>
+          <div class="deep-upsell-item"><div class="di-dot"></div><span>Grounded in today's live market conditions</span></div>
+        </div>
+        <div class="billing-toggle">
+          <span class="billing-label active" id="label-annual">Annual</span>
+          <button class="billing-switch" id="billing-switch" onclick="toggleBilling()"></button>
+          <span class="billing-label" id="label-monthly">Monthly</span>
+          <span class="save-badge">Save 28%</span>
+        </div>
+        <div class="plan-grid">
+          <div class="plan-card featured">
+            <div class="popular-badge">Most popular</div>
+            <div class="plan-name">Pro</div>
+            <div class="plan-price" id="pro-price">$120<span>/year</span></div>
+            <div class="plan-feature"><div class="plan-feature-dot"></div><span>100 blueprints a month</span></div>
+            <div class="plan-feature"><div class="plan-feature-dot"></div><span>Full deep analysis mode</span></div>
+            <div class="plan-feature"><div class="plan-feature-dot"></div><span>Saved blueprint history</span></div>
+            <div class="plan-feature"><div class="plan-feature-dot"></div><span>Refine and follow up</span></div>
+          </div>
+          <div class="plan-card">
+            <div style="height:22px;"></div>
+            <div class="plan-name">Investor+</div>
+            <div class="plan-price" id="plus-price">$293<span>/year</span></div>
+            <div class="plan-feature"><div class="plan-feature-dot"></div><span>Unlimited blueprints</span></div>
+            <div class="plan-feature"><div class="plan-feature-dot"></div><span>Live market drift alerts</span></div>
+            <div class="plan-feature"><div class="plan-feature-dot"></div><span>Crypto section access</span></div>
+            <div class="plan-feature"><div class="plan-feature-dot"></div><span>PDF export</span></div>
+          </div>
+        </div>
+        <button class="cta-btn" id="cta-btn" onclick="simulateUpgrade()">Get started with Pro at $120 a year</button>
+        <div class="cta-skip" onclick="showWall(false)">Maybe later, continue with limited access</div>
+      </div>
+    </div>
+
+    <div class="disc-footer">
+      <strong>Important disclaimer</strong>
+      FundPath is an AI-powered educational tool. Everything generated is for informational purposes only and does not constitute investment advice, a securities recommendation, or an offer to buy or sell any financial product. FundPath is not affiliated with Reuters, CNBC, MarketWatch, Yahoo Finance, or the Federal Reserve. All investing involves risk. Please talk to a licensed financial advisor before making any investment decisions.
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <div class="toast-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-7" stroke="#FAFAF5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <p><strong id="toast-title">Blueprint ready!</strong><span id="toast-body"> Your FundPath blueprint has been generated.</span></p>
+  </div>
+
+  <script>
+    /* ─────────────────────────────────────
+       REPLACE THIS WITH YOUR VERCEL URL
+       e.g. https://fundpath-abc123.vercel.app/api/generate
+    ───────────────────────────────────── */
+    const API_URL = 'https://YOUR-PROJECT-NAME.vercel.app/api/generate';
+
+    const FREE_LIMIT = 5;
+    let usedPrompts = 0;
+    let activeOpts = ['Stocks', 'ETFs', 'Mutual funds'];
+    let billingAnnual = true;
+    let notifyEnabled = false;
+    let progressTimer = null;
+    let currentMode = 'standard';
+
+    const EXAMPLES = {
+      quick:       { age: '23', risk: 'very high (aggressive growth, maximum risk tolerance)', timeline: 'very long term (15 or more years)', goal: 'building long term wealth', notes: 'Open to anything. Want maximum growth over the long run.' },
+      moderate:    { age: '45', risk: 'moderate (balanced growth and stability)', timeline: 'long term (7 to 15 years)', goal: 'building long term wealth', notes: 'Looking for a mix of dividend income and growth. Already hold some big tech stocks.' },
+      conservative:{ age: '55', risk: 'low (modest growth, minimal losses)', timeline: 'medium term (3 to 7 years)', goal: 'planning for retirement', notes: 'Retiring in about 10 years. Want to protect what I have but still grow a little.' },
+      tech:        { age: '28', risk: 'high (growth focused, comfortable with swings)', timeline: 'long term (7 to 15 years)', goal: 'diversifying what I already own', notes: 'Heavy tech exposure from RSUs and stock grants. Need to diversify away from concentration risk.' },
+      beginner:    { age: '24', risk: 'moderate (balanced growth and stability)', timeline: 'very long term (15 or more years)', goal: 'building long term wealth', notes: 'First time investor. Have $500 a month to put in. Want something simple I can stick to.' },
+      esg:         { age: '35', risk: 'moderate (balanced growth and stability)', timeline: 'long term (7 to 15 years)', goal: 'building long term wealth', notes: 'Strong ESG preference. No fossil fuels, no weapons manufacturers. Long term growth focus.' }
+    };
+
+    const STATUSES_DEEP = ['Pulling live market data...', 'Checking current rate environment...', 'Analysing sector trends...', 'Building your allocation...', 'Running scenario analysis...', 'Modelling your risk profile...', 'Writing your blueprint...'];
+    const STATUSES_STD  = ['Looking at your situation...', 'Mapping asset classes...', 'Building your allocation...', 'Writing your blueprint...'];
+
+    function updateUsage() {
+      const rem = FREE_LIMIT - usedPrompts;
+      const pct = Math.max(0, Math.round((rem / FREE_LIMIT) * 100));
+      const bar = document.getElementById('ubar');
+      bar.style.width = pct + '%';
+      bar.className = 'ubar' + (pct <= 20 ? ' crit' : pct <= 60 ? ' warn' : '');
+      document.getElementById('ucount').textContent = rem + ' / ' + FREE_LIMIT;
+      const nudge = document.getElementById('nudge');
+      const nt = document.getElementById('nudge-text');
+      if (rem === 1)      { nt.textContent = 'You only have 1 free prompt left this month.'; nudge.className = 'nudge show'; }
+      else if (rem === 2) { nt.textContent = 'You have 2 free prompts left this month.'; nudge.className = 'nudge show'; }
+      else                { nudge.className = 'nudge'; }
+    }
+
+    function setMode(m) {
+      currentMode = m;
+      document.getElementById('mode-std').className  = 'mode-card' + (m === 'standard' ? ' active' : '');
+      document.getElementById('mode-deep').className = 'mode-card' + (m === 'deep' ? ' active' : '');
+      const cs = document.getElementById('check-std');
+      const cd = document.getElementById('check-deep');
+      if (m === 'standard') {
+        cs.style.cssText = 'background:#0B3D2E;border-color:#0B3D2E;';
+        cs.innerHTML = '<svg width="9" height="6" viewBox="0 0 10 7" fill="none" style="position:absolute;top:5px;left:4px;"><path d="M1 3l3 3 5-5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
+        cd.style.cssText = ''; cd.innerHTML = '';
+      } else {
+        cd.style.cssText = 'background:#0B3D2E;border-color:#0B3D2E;';
+        cd.innerHTML = '<svg width="9" height="6" viewBox="0 0 10 7" fill="none" style="position:absolute;top:5px;left:4px;"><path d="M1 3l3 3 5-5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
+        cs.style.cssText = ''; cs.innerHTML = '';
+      }
+      updateEst();
+      document.getElementById('btn-label').textContent = m === 'deep' ? 'Run deep analysis' : 'Build my fund path';
+      document.getElementById('submit-note').textContent = m === 'deep'
+        ? 'Deep analysis takes 30 to 40 seconds. We pull live market data before writing your plan.'
+        : 'Your personalised blueprint will be ready in seconds. No account needed.';
+    }
+
+    function updateEst() {
+      const age  = document.getElementById('f-age').value;
+      const risk = document.getElementById('f-risk').value;
+      const row  = document.getElementById('est-row');
+      if (!age && !risk) { row.style.display = 'none'; return; }
+      row.style.display = 'flex';
+      if (currentMode === 'deep') {
+        document.getElementById('est-label').textContent = 'Deep analysis with live market search';
+        document.getElementById('est-time').textContent  = '30 to 40 sec';
+      } else {
+        document.getElementById('est-label').textContent = 'Standard blueprint based on your inputs';
+        document.getElementById('est-time').textContent  = '12 to 16 sec';
+      }
+      document.getElementById('notify-btn').style.display = 'flex';
+    }
+
+    function onInput() {
+      document.getElementById('char-count').textContent = document.getElementById('prompt').value.length;
+      updateEst();
+    }
+
+    function fillEx(key) {
+      const e = EXAMPLES[key];
+      document.getElementById('f-age').value      = e.age;
+      document.getElementById('f-risk').value     = e.risk;
+      document.getElementById('f-timeline').value = e.timeline;
+      document.getElementById('f-goal').value     = e.goal;
+      document.getElementById('prompt').value     = e.notes;
+      document.getElementById('char-count').textContent = e.notes.length;
+      updateEst();
+    }
+
+    function toggleNotify() {
+      notifyEnabled = !notifyEnabled;
+      document.getElementById('notify-btn').className = 'notify-btn' + (notifyEnabled ? ' active' : '');
+      document.getElementById('notify-label').textContent = notifyEnabled ? 'Notification set' : 'Notify me when ready';
+      if (notifyEnabled) showToast('Notification set', "We will let you know the moment your blueprint is ready.");
+    }
+
+    function showToast(title, body) {
+      document.getElementById('toast-title').textContent = title;
+      document.getElementById('toast-body').textContent  = ' ' + body;
+      const t = document.getElementById('toast');
+      t.className = 'toast show';
+      setTimeout(() => t.className = 'toast', 4200);
+    }
+
+    function startProgress(totalSecs) {
+      const wrap     = document.getElementById('progress-wrap');
+      const bar      = document.getElementById('prog-bar');
+      const timeEl   = document.getElementById('prog-time');
+      const statusEl = document.getElementById('prog-status');
+      const statuses = currentMode === 'deep' ? STATUSES_DEEP : STATUSES_STD;
+      wrap.className = 'progress-wrap show';
+      bar.style.width = '0%';
+      const startTime = Date.now();
+      let statusIdx = 0;
+      statusEl.textContent = statuses[0];
+      progressTimer = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const pct     = Math.min(90, Math.round((elapsed / totalSecs) * 90));
+        bar.style.width = pct + '%';
+        const rem = Math.max(0, Math.round(totalSecs - elapsed));
+        timeEl.textContent = rem > 0 ? rem + 's remaining' : 'Almost there...';
+        const newIdx = Math.min(statuses.length - 1, Math.floor((pct / 90) * (statuses.length - 1)));
+        if (newIdx !== statusIdx) { statusIdx = newIdx; statusEl.textContent = statuses[statusIdx]; }
+      }, 400);
+    }
+
+    function finishProgress() {
+      if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+      document.getElementById('prog-bar').style.width    = '100%';
+      document.getElementById('prog-time').textContent   = 'Done';
+      document.getElementById('prog-status').textContent = 'Blueprint complete';
+      setTimeout(() => document.getElementById('progress-wrap').className = 'progress-wrap', 1400);
+    }
+
+    function toggleBilling() {
+      billingAnnual = !billingAnnual;
+      document.getElementById('billing-switch').className  = 'billing-switch' + (billingAnnual ? '' : ' monthly');
+      document.getElementById('label-annual').className    = 'billing-label' + (billingAnnual ? ' active' : '');
+      document.getElementById('label-monthly').className   = 'billing-label' + (!billingAnnual ? ' active' : '');
+      document.getElementById('pro-price').innerHTML       = billingAnnual ? '$120<span>/year</span>' : '$14<span>/mo</span>';
+      document.getElementById('plus-price').innerHTML      = billingAnnual ? '$293<span>/year</span>' : '$34<span>/mo</span>';
+      document.getElementById('cta-btn').textContent       = billingAnnual ? 'Get started with Pro at $120 a year' : 'Get started with Pro at $14 a month';
+    }
+
+    function showWall(show) {
+      document.getElementById('upgrade-wall').className = show ? 'upgrade-wall visible' : 'upgrade-wall';
+      if (show) document.getElementById('wall-title').textContent = usedPrompts >= FREE_LIMIT ? "You have used all 5 free prompts" : "Unlock FundPath Pro";
+    }
+
+    function simulateUpgrade() {
+      usedPrompts = 0; updateUsage(); showWall(false);
+      alert('Connect Stripe here to accept real payments.');
+    }
+
+    function toggleChip(el) {
+      const text = el.textContent.trim();
+      if (el.classList.contains('on')) { el.classList.remove('on'); activeOpts = activeOpts.filter(o => o !== text); }
+      else { el.classList.add('on'); activeOpts.push(text); }
+    }
+
+    async function runPortfolio() {
+      if (usedPrompts >= FREE_LIMIT) { showWall(true); return; }
+      const age      = document.getElementById('f-age').value.trim();
+      const risk     = document.getElementById('f-risk').value;
+      const timeline = document.getElementById('f-timeline').value;
+      const goal     = document.getElementById('f-goal').value;
+      const notes    = document.getElementById('prompt').value.trim();
+      document.getElementById('err').style.display = 'none';
+      if (!age || !risk) { document.getElementById('err').style.display = 'block'; return; }
+
+      const assetTypes = activeOpts.length ? activeOpts.join(', ') : 'stocks, ETFs and mutual funds';
+      const estTime    = currentMode === 'deep' ? 36 : 14;
+
+      const rc  = document.getElementById('result-card');
+      const rb  = document.getElementById('result-body');
+      const ts  = document.getElementById('tease-section');
+      rc.className = 'result-card'; ts.className = 'tease-section';
+      rb.innerHTML = '<div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+
+      const btn = document.getElementById('run-btn');
+      btn.disabled = true;
+      document.getElementById('btn-label').textContent = currentMode === 'deep' ? 'Running deep analysis...' : 'Building your fund path...';
+
+      startProgress(estTime);
+
+      try {
+        /* ── REPLACE API_URL AT TOP OF SCRIPT WITH YOUR VERCEL URL ── */
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ age, risk, timeline, goal, notes, assetTypes, mode: currentMode })
+        });
+
+        const data = await response.json();
+        finishProgress();
+
+        if (data.error) {
+          rb.innerHTML = `<p style="color:#8B2020;">Error: ${data.error}</p>`;
+          rc.className = 'result-card visible';
+        } else {
+          rb.innerHTML = formatResult(data.result);
+          rc.className = 'result-card visible';
+          ts.className = 'tease-section visible';
+          usedPrompts++;
+          updateUsage();
+          rc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (notifyEnabled) {
+            showToast('Blueprint ready!', 'Your FundPath blueprint has been generated.');
+            notifyEnabled = false;
+            document.getElementById('notify-btn').className = 'notify-btn';
+            document.getElementById('notify-label').textContent = 'Notify me when ready';
+          }
+          if (usedPrompts >= FREE_LIMIT) setTimeout(() => showWall(true), 2200);
+        }
+      } catch (e) {
+        finishProgress();
+        rb.innerHTML = '<p style="color:#8B2020;">Could not connect to the server. Make sure you have updated the API_URL with your Vercel URL.</p>';
+        rc.className = 'result-card visible';
+      }
+
+      btn.disabled = false;
+      document.getElementById('btn-label').textContent = currentMode === 'deep' ? 'Run deep analysis' : 'Build my fund path';
+    }
+
+    function formatResult(text) {
+      let html = '', inList = false;
+      for (const line of text.split('\n')) {
+        const t = line.trim();
+        if (!t) { if (inList) { html += '</ul>'; inList = false; } html += '<br>'; continue; }
+        if (t.startsWith('##')) { if (inList) { html += '</ul>'; inList = false; } html += `<h3>${t.replace(/^#+\s*/, '')}</h3>`; }
+        else if (t.match(/^[-•]\s/) || t.match(/^\d+\.\s/)) { if (!inList) { html += '<ul>'; inList = true; } html += `<li>${t.replace(/^[-•]\s*/, '').replace(/^\d+\.\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</li>`; }
+        else { if (inList) { html += '</ul>'; inList = false; } html += `<p>${t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>`; }
+      }
+      if (inList) html += '</ul>';
+      return html;
+    }
+
+    updateUsage();
+  </script>
+</body>
+</html>
