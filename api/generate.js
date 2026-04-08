@@ -70,7 +70,7 @@ Today's date is ${today}. ${isDeep ? 'Use your extended thinking to reason caref
 
   // Build the request body for Opus 4.6 with extended thinking
   const requestBody = {
-    model: 'claude-opus-4-5',
+    model: 'claude-sonnet-4-20250514',
     max_tokens: isDeep ? 4000 : 2000,
     thinking: {
       type: 'enabled',
