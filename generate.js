@@ -1,12 +1,23 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // Handle preflight CORS request
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
   const { age, risk, timeline, goal, notes, assetTypes, mode } = req.body;
 
-  if (!age || !risk) return res.status(400).json({ error: 'Age and risk tolerance are required.' });
+  if (!age || !risk) {
+    return res.status(400).json({ error: 'Age and risk tolerance are required.' });
+  }
 
   const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const isDeep = mode === 'deep';
@@ -56,7 +67,7 @@ Their main goal: ${goal || 'not specified'}
 Asset types they want: ${assetTypes || 'stocks, ETFs and mutual funds'}
 Extra context: ${notes || 'nothing extra provided'}
 
-${isDeep ? `Start by searching the web for current market conditions as of ${today}, then use that context throughout.` : 'Keep it clear and helpful. Write for someone who is new to investing.'}`;
+${isDeep ? `Start by searching the web for current market conditions as of ${today}, then use that context throughout the blueprint.` : 'Keep it clear and helpful. Write for someone who is new to investing.'}`;
 
   const body = {
     model: 'claude-sonnet-4-20250514',
@@ -65,7 +76,9 @@ ${isDeep ? `Start by searching the web for current market conditions as of ${tod
     messages: [{ role: 'user', content: userMessage }]
   };
 
-  if (isDeep) body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+  if (isDeep) {
+    body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+  }
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -79,13 +92,20 @@ ${isDeep ? `Start by searching the web for current market conditions as of ${tod
     });
 
     const data = await response.json();
-    if (data.error) return res.status(500).json({ error: data.error.message });
 
-    const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    if (data.error) {
+      return res.status(500).json({ error: data.error.message });
+    }
+
+    const text = data.content
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('');
+
     return res.status(200).json({ result: text });
 
   } catch (err) {
-    console.error('API error:', err);
+    console.error('Anthropic API error:', err);
     return res.status(500).json({ error: 'Failed to generate blueprint. Please try again.' });
   }
 }
